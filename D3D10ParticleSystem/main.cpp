@@ -43,7 +43,7 @@ ID3D10RasterizerState *rasterizeState = nullptr;
 
 const float defG = 16.6738480f; // Гравитационная постоянная умноженная на массу "курсора"
 const float defResistance = 0.9975f; // Сопротивление среде
-const float defSize = 10;
+const float defSize = 3;
 
 //Variables
 int Height = 0;
@@ -52,12 +52,13 @@ int Width = 0;
 float G = defG;
 float Resistance = defResistance;
 float Size = defSize;
+int updateDelay = 8;
 
 
 #ifdef _DEBUG
 int particlesCount = 5000;
 #else
-int particlesCount = 1000000;
+int particlesCount = 1500000;
 #endif
 
 std::deque<Particle> particles;
@@ -65,72 +66,72 @@ std::deque<Particle> particles;
 /*
 void animate()
 {
-	POINT pos;
-	GetCursorPos(&pos);
-	RECT rc;
-	GetClientRect(hMainWnd, &rc); 
-	ScreenToClient(hMainWnd, &pos);
+POINT pos;
+GetCursorPos(&pos);
+RECT rc;
+GetClientRect(hMainWnd, &rc); 
+ScreenToClient(hMainWnd, &pos);
 
-	const int mx = pos.x;
-	const int my = pos.y;
-	const auto size = particles.size();
+const int mx = pos.x;
+const int my = pos.y;
+const auto size = particles.size();
 
-	float force;
-	float distSquare;
+float force;
+float distSquare;
 
-	D3DParticle *pVertexBuffer;
-	vertexBuffer->Map(D3D10_MAP_WRITE_DISCARD, 0, ((void **)&pVertexBuffer));
+D3DParticle *pVertexBuffer;
+vertexBuffer->Map(D3D10_MAP_WRITE_DISCARD, 0, ((void **)&pVertexBuffer));
 
-	int i;
+int i;
 #pragma omp parallel \
-	shared(pVertexBuffer, particles, mx, my, size) \
-	private(i, force, distSquare)
-	{
+shared(pVertexBuffer, particles, mx, my, size) \
+private(i, force, distSquare)
+{
 #pragma omp for
-		for( i = 0; i < size; ++i )
-		{
-			auto &x = particles[i].x;
-			auto &y = particles[i].y;
+for( i = 0; i < size; ++i )
+{
+auto &x = particles[i].x;
+auto &y = particles[i].y;
 
-			distSquare = pow( x - mx, 2 ) + pow( y - my, 2 );
-			if( distSquare < 400 ) // A magic number represent min process distance
-			{
-				force = 0;
-			}
-			else
-			{
-				force = G / distSquare;
-			}
+distSquare = pow( x - mx, 2 ) + pow( y - my, 2 );
+if( distSquare < 400 ) // A magic number represent min process distance
+{
+force = 0;
+}
+else
+{
+force = G / distSquare;
+}
 
-			const float xForce = (mx - x) * force;
-			const float yForce = (my - y) * force;
+const float xForce = (mx - x) * force;
+const float yForce = (my - y) * force;
 
-			particles[i].vx *= Resistance;
-			particles[i].vy *= Resistance;
+particles[i].vx *= Resistance;
+particles[i].vy *= Resistance;
 
-			particles[i].vx += xForce;
-			particles[i].vy += yForce;
+particles[i].vx += xForce;
+particles[i].vy += yForce;
 
-			x+= particles[i].vx;
-			y+= particles[i].vy;
+x+= particles[i].vx;
+y+= particles[i].vy;
 
-			if( x > Width )
-				x -= Width;
-			else if( x < 0 )
-				x += Width;
+if( x > Width )
+x -= Width;
+else if( x < 0 )
+x += Width;
 
-			if( y > Height )
-				y -= Height;
-			else if( y < 0 )
-				y += Height;
+if( y > Height )
+y -= Height;
+else if( y < 0 )
+y += Height;
 
-			pVertexBuffer[i].pos.x = particles[i].x;
-			pVertexBuffer[i].pos.y = particles[i].y;
-			pVertexBuffer[i].velocity.x = fabs(particles[i].vx)/7;
-			pVertexBuffer[i].velocity.y = fabs(particles[i].vy)/7;
-		}
-	}
-	vertexBuffer->Unmap();
+pVertexBuffer[i].pos.x = particles[i].x;
+pVertexBuffer[i].pos.y = particles[i].y;
+pVertexBuffer[i].velocity.x = fabs(particles[i].vx)/7;
+pVertexBuffer[i].velocity.y = fabs(particles[i].vy)/7;
+}
+}
+vertexBuffer->Unmap();
 }
 */
 //////////////////////////////////////////////////////////////////////////
@@ -427,8 +428,41 @@ void Render()
 	swapChain->Present(NULL, NULL);
 }
 
+void initVariables() 
+{
+	int args = 0;
+	auto data = CommandLineToArgvW(GetCommandLineW(), &args);
+
+	for(int i=1; i<args; ++i)
+	{
+		if(data[i][0] == '-') //We recive a parameter
+		{
+			if(i < args-1) //We have a data after parameter
+			{
+				if(data[i+1][0] != '-') //We have a value
+				{
+					if(wcscmp(data[i]+1, L"pointSize") == 0)
+					{
+						Size = _wtof(data[i+1]);
+					}
+					else if(wcscmp(data[i]+1, L"updateDelay") == 0)
+					{
+						updateDelay = _wtoi(data[i+1]);
+					}
+					else if(wcscmp(data[i]+1, L"particles") == 0)
+					{
+						particlesCount = _wtoi(data[i+1]);
+					}
+				}
+			}
+		}
+	}
+}
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nShow)
 {
+	initVariables();
+
 	WNDCLASSEX wc = {sizeof(WNDCLASSEX), CS_VREDRAW|CS_HREDRAW|CS_OWNDC, 
 		WndProc, 0, 0, hInstance, NULL, NULL, (HBRUSH)(COLOR_WINDOW+1), 
 		NULL, L"ParticleSystemClass", NULL}; 
@@ -444,7 +478,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInst, LPSTR lpCmdLine, in
 
 		NULL, NULL, hInstance, NULL);
 
-	SetTimer(hMainWnd, 0, 8, 0);
+	SetTimer(hMainWnd, 0, updateDelay, 0);
 
 	init();
 
@@ -453,17 +487,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInst, LPSTR lpCmdLine, in
 
 
 	MSG msg = {0};
-	while( WM_QUIT != msg.message )
+	while(GetMessage(&msg, NULL, 0, 0))
 	{
-		if( PeekMessage( &msg, NULL, 0, 0, PM_REMOVE ) )
-		{
-			TranslateMessage( &msg );
-			DispatchMessage( &msg );
-		}
-		else
-		{
-			Render();
-		}
+		TranslateMessage(&msg);
+		DispatchMessage(&msg);
 	}
 
 	cleanUp();
@@ -484,7 +511,8 @@ LRESULT WINAPI WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 	case WM_TIMER:
 		UpdateParticles();
-		return 0;
+		Render();
+		return TRUE;
 
 	case WM_DESTROY:
 		PostQuitMessage(0);
