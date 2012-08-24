@@ -9,7 +9,7 @@ LRESULT WINAPI WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 struct Particle
 {
-	float x,y, vx, vy; //Координаты и скорости
+	float x,y, vx, vy; //пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 };
 
 struct D3DParticle
@@ -41,8 +41,8 @@ ID3D10RasterizerState *rasterizeState = nullptr;
 
 //Constant
 
-const float defG = 16.6738480f; // Гравитационная постоянная умноженная на массу "курсора"
-const float defResistance = 0.9975f; // Сопротивление среде
+const float defG = 16.6738480f; // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ "пїЅпїЅпїЅпїЅпїЅпїЅпїЅ"
+const float defResistance = 0.9975f; // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
 const float defSize = 3;
 
 //Variables
@@ -63,78 +63,7 @@ int particlesCount = 1500000;
 
 std::deque<Particle> particles;
 //////////////////////////////////////////////////////////////////////////
-/*
-void animate()
-{
-POINT pos;
-GetCursorPos(&pos);
-RECT rc;
-GetClientRect(hMainWnd, &rc); 
-ScreenToClient(hMainWnd, &pos);
 
-const int mx = pos.x;
-const int my = pos.y;
-const auto size = particles.size();
-
-float force;
-float distSquare;
-
-D3DParticle *pVertexBuffer;
-vertexBuffer->Map(D3D10_MAP_WRITE_DISCARD, 0, ((void **)&pVertexBuffer));
-
-int i;
-#pragma omp parallel \
-shared(pVertexBuffer, particles, mx, my, size) \
-private(i, force, distSquare)
-{
-#pragma omp for
-for( i = 0; i < size; ++i )
-{
-auto &x = particles[i].x;
-auto &y = particles[i].y;
-
-distSquare = pow( x - mx, 2 ) + pow( y - my, 2 );
-if( distSquare < 400 ) // A magic number represent min process distance
-{
-force = 0;
-}
-else
-{
-force = G / distSquare;
-}
-
-const float xForce = (mx - x) * force;
-const float yForce = (my - y) * force;
-
-particles[i].vx *= Resistance;
-particles[i].vy *= Resistance;
-
-particles[i].vx += xForce;
-particles[i].vy += yForce;
-
-x+= particles[i].vx;
-y+= particles[i].vy;
-
-if( x > Width )
-x -= Width;
-else if( x < 0 )
-x += Width;
-
-if( y > Height )
-y -= Height;
-else if( y < 0 )
-y += Height;
-
-pVertexBuffer[i].pos.x = particles[i].x;
-pVertexBuffer[i].pos.y = particles[i].y;
-pVertexBuffer[i].velocity.x = fabs(particles[i].vx)/7;
-pVertexBuffer[i].velocity.y = fabs(particles[i].vy)/7;
-}
-}
-vertexBuffer->Unmap();
-}
-*/
-//////////////////////////////////////////////////////////////////////////
 bool initD3D()
 {
 	DXGI_SWAP_CHAIN_DESC sd;
@@ -289,7 +218,7 @@ bool initVertexes()
 	};
 	UINT numElements = sizeof( layout ) / sizeof( layout[0] );
 
-	// Создаем input layout
+	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅ input layout
 	D3D10_PASS_DESC PassDesc;
 	renderTech->GetPassByIndex( 0 )->GetDesc( &PassDesc );
 	auto hr = device->CreateInputLayout( layout, numElements, PassDesc.pIAInputSignature,
@@ -366,13 +295,13 @@ void cleanUp()
 
 void DrawParticles() 
 {
-	// устанавливаем vertex buffer
+	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ vertex buffer
 	UINT stride = sizeof( D3DParticle );
 	UINT offset = 0;
 	device->IASetVertexBuffers( 0, 1, &vertexBuffer, &stride, &offset );
 	device->IASetPrimitiveTopology( D3D10_PRIMITIVE_TOPOLOGY_POINTLIST );
 
-	// Устанавливаем input layout
+	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ input layout
 	device->IASetInputLayout( vertexLayout );
 
 	device->Draw(particles.size(), 0);
